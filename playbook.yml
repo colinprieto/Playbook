@@ -1,0 +1,172 @@
+---
+- hosts: web
+  sudo: yes
+
+  tasks:
+
+    - name: update apt
+      apt: update_cache=yes cache_valid_time=3600
+
+    - name: upgrade apt
+      apt: upgrade=yes
+
+    - name: Install useful libs
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - nano
+        - zip
+        - gcc
+        - make
+        - unzip
+        - build-essential
+        - git
+        - tree
+        - curl
+        - gnupg
+        - zip
+        - rsync
+        - wget
+        - unattended-upgrades
+        - openssl
+        - ssl-cert
+
+    - name: Install security features
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - fail2ban
+        - chkrootkit
+      notify:
+        - restart fail2ban
+
+    - name: config iptables
+      copy: src=files/firewall.sh dest=/etc/init.d/firewall mode=744 force=yes
+
+    - name: Install packages Apache and PHP
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - apache2
+        - apache2-utils
+        - php5-common
+        - libapache2-mod-php5 
+        - php5-cli
+      notify:
+        - restart apache2
+    - name: enable apache2 mods
+      apache2_module: state=present name={{ item }}
+      with_items:
+        - cache 
+        - deflate 
+        - dir 
+        - expires 
+        - mem_cache 
+        - mime 
+        - php5 
+        - reqtimeout 
+        - rewrite 
+        - setenvif
+
+    - name: ensure fail2ban is running
+      action: service name=fail2ban state=started enabled=yes
+
+  handlers:
+    - name: restarwt apache2
+      action: service name=apache2 state=restarted enabled=yes
+    
+    - name: restart ssh
+      action: service name=ssh state=restarted enabled=yes
+
+    - name: restart fail2ban
+      action: service name=fail2ban state=restarted enabled=yes
+
+    - name: restart iptables
+      command: /etc/init.d/firewall
+
+- hosts: mysql
+  sudo: yes
+  vars:
+    pmav: 4.2.7
+    dbname: myapp
+    dbuser: django
+    dbpassword: mysupersecretpassword
+
+  tasks:
+    - name: Install Mysql
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - mysql-client
+        - mysql-server
+        - php5-mysql
+        - python-dev
+        - python-mysqldb
+        - mysql-common
+      notify:
+        - restart Mysql
+
+    - name: Create database
+      action: mysql_db db={{dbname}} state=present
+
+    - name: Create database user
+      action: mysql_user user={{dbuser}} password={{dbpassword}} priv=*.*:ALL state=present
+
+    - name: Install phpmyadmin
+      get_url: url=http://downloads.sourceforge.net/project/phpmyadmin/phpMyAdmin/{{pmav}}/phpMyAdmin-{{pmav}}-all-languages.tar.bz2 dest=/var/www/ mode=0744
+
+    - name: extract pma
+      command: tar -xvf phpMyAdmin-{{pmav}}-all-languages.tar.bz2 chdir=/var/www
+
+    - name: rename  pma
+      command: mv phpMyAdmin-{{pmav}}-all-languages phpmyadmin chdir=/var/www
+
+    - name: remove archive
+      command: rm phpMyAdmin-{{pmav}}-all-languages.tar.bz2 chdir=/var/www
+  handlers:
+
+    - name : restart Mysql
+      action : service name=mysql state=restarted
+
+- hosts: pgsql
+  sudo: yes
+  vars:
+    ppav: 5.1
+
+  tasks:
+    - name: Install pgsql
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - postgresql
+        - libpq-dev
+        - python-psycopg2
+    - name: Install phppgadmin
+      get_url: url=http://downloads.sourceforge.net/project/phppgadmin/phpPgAdmin%20%5Bstable%5D/phpPgAdmin-{{ppav}}/phpPgAdmin-{{ppav}}.tar.bz2 dest=/var/www/ mode=0644
+    
+    - name: extract phppgadmin
+      command: tar -xvf phpPgAdmin-{{ppav}}.tar.bz2 chdir=/var/www
+
+    - name: rename phppgadmin
+      command: mv phpPgAdmin-{{ppav}} phppgadmin chdir=/var/www
+
+    - name: remove archive
+      command: rm phpPgAdmin-{{ppav}}.tar.bz2 chdir=/var/www
+- hosts: pgsql
+  sudo: yes
+  sudo_user: postgres
+
+  vars:
+    dbname: myapp
+    dbuser: django
+    dbpassword: mysupersecretpassword
+  tasks:
+    - name: ensure database is created
+      postgresql_db: name={{dbname}}
+
+    - name: ensure user has access to database
+      postgresql_user: db={{dbname}} name={{dbuser}} password={{dbpassword}} priv=ALL
+
+    - name: ensure user does not have unnecessary privilege
+      postgresql_user: name={{dbuser}} role_attr_flags=NOSUPERUSER,NOCREATEDB
+
+  handlers:
+
+    - name : restart Mysql
+      sudo : yes
+      action: name=mysql state=started enabled=true

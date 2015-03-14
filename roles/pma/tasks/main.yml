@@ -1,0 +1,11 @@
+- name: Téléchargement de pma
+  get_url: url=http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/4.3.11/phpMyAdmin-4.3.11-all-languages.tar.gz dest=/var/www/pma.tar.gz
+
+- name: Désarchivage de pma
+  unarchive: copy=no src=/var/www/pma.tar.gz dest=/var/www/
+
+- name: Rename folder
+  command: mv /var/www/phpMyAdmin-4.3.11-all-languages /var/www/pma
+
+- name: Suppression de l'archive
+  file: state=absent path=/var/www/pma.tar.gz

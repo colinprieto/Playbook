@@ -1,0 +1,17 @@
+---
+# This is the top-level playbook that defines our entire infrastructure.
+
+- hosts: all
+  user: admin
+  sudo: True
+  gather_facts: True
+  vars_files:
+    - vars/defaults.yml
+    - vars/user.yml
+    - vars/mysql.yml
+    - vars/varnish.yml
+
+  roles:
+  - common
+
+

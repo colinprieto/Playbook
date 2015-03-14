@@ -1,0 +1,28 @@
+---
+# Defines tasks applicable across all machines in the infrastructure.
+
+
+- name: Install packages
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - nodejs 
+    - build-essential 
+    - git
+
+- name: Install "codebox"  package globally.
+  npm: name=codebox global=yes
+
+- name: Add codebox user
+  user: name=codebox
+
+- name: Creates codebox directory
+  file: path={{ codeboxdir }} state=directory
+  sudo_user: codebox
+
+- name: git init
+  command: "git init {{ codeboxdir }}"
+  sudo_user: codebox
+
+- name: Codebox run
+  command: "codebox run {{ codeboxdir }}"
+  sudo_user: codebox

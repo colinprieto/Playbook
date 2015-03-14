@@ -1,0 +1,61 @@
+---
+###############################################################################
+# Set your variables here.
+# For a complete reference look at the `vars/defaults.yml` file.
+###############################################################################
+
+# common
+domain: mugicha.ovh
+main_user_name: colin
+
+# database
+db_admin_username: colin
+db_admin_password: h4FrvtRPG
+
+# mailserver
+mail_db_password: pass
+mail_virtual_domains:
+  - name: "{{ domain }}"
+    pk_id: 1
+#  - name: TODO.com
+#    pk_id: 2
+mail_virtual_users:
+  - account: "{{ main_user_name }}"
+    domain: "{{ domain }}"
+    password_hash: TODO
+    domain_pk_id: 1
+#  - account: "{{ TODO }}"
+#    domain: "{{ domain }}"
+#    password_hash: TODO
+#    domain_pk_id: 2
+mail_virtual_aliases:
+  - source: "root@{{ domain }}"
+    destination: "{{ admin_email }}"
+    domain_pk_id: 1
+  - source: "postmaster@{{ domain }}"
+    destination: "{{ admin_email }}"
+    domain_pk_id: 1
+  - source: "webmaster@{{ domain }}"
+    destination: "{{ admin_email }}"
+    domain_pk_id: 1
+mail_header_privacy: 1
+
+# z-push
+zpush_timezone: "TODO"  #Example: "America/New_York"
+
+# owncloud
+owncloud_db_password: TODO
+
+# Codebox
+codeboxdir: "/home"
+
+# vpn
+openvpn_key_country:  "FR"
+openvpn_key_province: "Midi Pyrenees"
+openvpn_key_city: "Toulouse"
+openvpn_key_org: " "
+openvpn_key_ou: " "
+openvpn_clients:
+  - laptop
+  - phone
+  - tablet

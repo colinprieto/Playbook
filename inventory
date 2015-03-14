@@ -1,0 +1,2 @@
+[web]
+mugicha ansible_ssh_host=92.222.75.113 ansible_ssh_user=admin
